@@ -13,6 +13,13 @@ void debugger::run() {
     }
 }
 
+void debugger::set_breakpoint(std::intptr_t address) {
+    std::cout << "Set breakpoint at 0x" << std::hex << address << '\n';
+    breakpoint bp{pid_, address};
+    bp.enable();
+    breakpoints_[address] = bp;
+}
+
 std::vector<std::string_view> split(
         std::string_view str, 
         std::string_view delim) 
@@ -35,10 +42,17 @@ std::vector<std::string_view> split(
 
 void debugger::handle_command(std::string_view line) {
     auto args = split(line, " ");
-
     auto command = args[0];
+
     if (std::string_view("continue").starts_with(command)) {
         continue_execution();
+    }
+    else if (std::string_view("break").starts_with(command)) {
+        auto addr_sv {args[1].substr(2)};
+
+        unsigned long long address;
+        std::from_chars(addr_sv.data() + 2, addr_sv.data() + addr_sv.size(), address);
+        set_breakpoint(address);
     }
     else {
         std::cerr << "Unknowd command\n";
